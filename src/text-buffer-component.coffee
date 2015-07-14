@@ -6,15 +6,15 @@ module.exports = React.createClass
     input = @refs.input.getDOMNode()
     input.addEventListener 'keydown', (ev) =>
       ev.preventDefault()
-      display = @refs.display.getDOMNode()
       char = charFromKeyEvent(ev)
+      input.value = char
+
       @state.doc.handleInput
         char : char
         shift: ev.shiftKey
         alt  : ev.altKey
         meta : ev.metaKey
         ctrl : ev.ctrlKey
-
       @setState body: @state.doc.text
 
   focus: -> @refs.input.getDOMNode().focus()
@@ -22,6 +22,7 @@ module.exports = React.createClass
   getInitialState: ->
     doc: new Document
     body: ''
+    onComposition: false
 
   render: ->
     $ = React.createElement
@@ -29,35 +30,22 @@ module.exports = React.createClass
       ref: 'textBuffer'
       onClick: @focus
       key: 'textBuffer'
-      style: {
+      style:
         width: 400
         height: 800
         outline: '1px solid gray'
-      }
     }, [
-      $ 'div', key: 'hiddenTextAaeaWrapper', style: {
-        overflow: 'hidden'
-        position: 'relative'
-        width: 3
-        height: 0
-        top: 5
-        left: 8
-      }, [
-        $ 'textarea', {
-          ref:'input'
-          key: 'hiddenTextArea'
-          autoCorrect:"off"
-          autoCapitalize:"off"
-          spellCheck:"false"
-          style: {
-            position: 'absolute'
-            padding: 0
-            width: '1000px'
-            height: '1em'
-            outline: 'none'
-          }
-        }
-      ]
+      $ 'textarea', {
+        ref: 'input'
+        contenteditable: true
+        style:
+          # position: 'absolute'
+          padding: 0
+          # width: '1000px'
+          height: '1em'
+          outline: 'none'
+      }
+
       $ 'div', {key: 'displayContainer', ref:'display'}, [
         $ 'div', {className: 'linesContainer', key: 'lines'},
           for line, lineCount in @state.body.split('\n')
