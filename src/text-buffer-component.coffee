@@ -1,6 +1,32 @@
+$ = React.createElement
+
 charFromKeyEvent = require './char-from-key-event'
 Document = require './document'
 raf = window?.requestAnimationFrame ? setInterval
+
+Buffer = React.createClass
+  render: ->
+    $ 'div', {className: 'linesContainer', key: 'lines'},
+      for line, lineCount in @props.body.split('\n')
+        $ 'div', {key: 'l:'+lineCount, className: 'line'},
+          if line.length > 0
+            for char, charCount in line.split('')
+              cursor = @props.doc.cursor
+              if cursor.ch-1 is charCount and cursor.line is lineCount
+                # This is cursor positon
+                $ 'span', {
+                  ref: 'cursor'
+                  key: lineCount+':'+charCount
+                  className: 'cursor'
+                  style: {color: 'blue'}
+                }, '|'
+              else
+                $ 'span', {
+                  key: lineCount+':'+charCount
+                  className: 'char'
+                }, char
+          else
+            [$ 'br']
 
 module.exports = React.createClass
   componentDidMount: ->
@@ -66,10 +92,8 @@ module.exports = React.createClass
   getInitialState: ->
     doc: new Document
     body: ''
-    onComposition: false
 
   render: ->
-    $ = React.createElement
     $ 'div', {
       ref: 'textBuffer'
       onClick: @focus
@@ -88,30 +112,11 @@ module.exports = React.createClass
           left: 300
           padding: 0
           backgroundColor: 'wheat'
-          width: '1000px'
+          width: '400px'
           height: '1em'
           outline: 'none'
       }
-
       $ 'div', {key: 'displayContainer', ref:'display'}, [
-        $ 'div', {className: 'linesContainer', key: 'lines'},
-          for line, lineCount in @state.body.split('\n')
-            $ 'div', {key: 'l:'+lineCount, className: 'line'},
-              if line.length > 0
-                for char, charCount in line.split('')
-                  cursor = @state.doc.cursor
-                  $ 'span', {
-                    key: lineCount+':'+charCount
-                    className: 'char'
-                    style: {
-                      backgroundColor:
-                        if cursor.ch-1 is charCount and cursor.line is lineCount
-                          'green'
-                        else
-                          'transparent'
-                    }
-                  }, char
-              else
-                [$ 'br']
+        $ Buffer, @state
       ]
     ]
