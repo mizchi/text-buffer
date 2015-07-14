@@ -1,19 +1,21 @@
 charFromKeyEvent = require './char-from-key-event'
 Document = require './document'
+
 module.exports = React.createClass
-  onKeyDown: (ev) ->
-    ev.preventDefault()
-    display = @refs.display.getDOMNode()
-    char = charFromKeyEvent(ev)
+  componentDidMount: ->
+    input = @refs.input.getDOMNode()
+    input.addEventListener 'keydown', (ev) =>
+      ev.preventDefault()
+      display = @refs.display.getDOMNode()
+      char = charFromKeyEvent(ev)
+      @state.doc.handleInput
+        char : char
+        shift: ev.shiftKey
+        alt  : ev.altKey
+        meta : ev.metaKey
+        ctrl : ev.ctrlKey
 
-    @state.doc.handleInput
-      char : char
-      shift: ev.shiftKey
-      alt  : ev.altKey
-      meta : ev.metaKey
-      ctrl : ev.ctrlKey
-
-    @setState body: @state.doc.text
+      @setState body: @state.doc.text
 
   focus: -> @refs.input.getDOMNode().focus()
 
@@ -44,7 +46,6 @@ module.exports = React.createClass
         $ 'textarea', {
           ref:'input'
           key: 'hiddenTextArea'
-          onKeyDown: @onKeyDown
           autoCorrect:"off"
           autoCapitalize:"off"
           spellCheck:"false"
