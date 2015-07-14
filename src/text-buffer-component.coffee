@@ -1,10 +1,9 @@
-$ = React.createElement
+flatten = require 'lodash.flatten'
 
 charFromKeyEvent = require './char-from-key-event'
 Document = require './document'
 raf = window?.requestAnimationFrame ? setInterval
-
-flatten = require 'lodash.flatten'
+$ = React.createElement
 
 Buffer = React.createClass
   render: ->
@@ -15,10 +14,8 @@ Buffer = React.createClass
             [
               $ 'span', {
                 ref: 'cursor'
-                # key: 'cursor'
                 className: 'cursor'
-                style: {color: 'blue'}
-              }, '|'
+              }, ''
             ]
           else
             chars =
@@ -33,9 +30,12 @@ Buffer = React.createClass
                     }, char
                     $ 'span', {
                       key: lineCount+':'+charCount+'cursor'
-                      className: 'char'
+                      className: 'cursor'
                       ref: 'cursor'
-                    }, '|'
+                      style:
+                        width: 0
+                        visibility: 'hidden'
+                    }, ''
                   ]
                 else
                   [
@@ -47,7 +47,23 @@ Buffer = React.createClass
             flatten(chars)
 
 module.exports = React.createClass
+  _adjustCursorPositon: ->
+    input = @refs.input.getDOMNode()
+    cursor = @refs.buffer.refs.cursor.getDOMNode()
+    # TODO: Firefox won't work
+    # TODO: detect this params
+    x = cursor.offsetLeft + 1
+    y = cursor.offsetTop - 4
+    input.style.left = x+'px'
+    input.style.top = y+'px'
+
+  componentDidUpdate: ->
+    console.log 'didUpdate'
+    @_adjustCursorPositon()
+
   componentDidMount: ->
+    @_adjustCursorPositon()
+
     onComposition = false
 
     input = @refs.input.getDOMNode()
@@ -62,6 +78,8 @@ module.exports = React.createClass
       console.log '--- composition:end'
       char = ev.data
       onComposition = false
+      cursor = @refs.buffer.refs.cursor.getDOMNode()
+      cursor.style.color = 'black'
 
       # exec priority
       events.unshift =>
@@ -78,11 +96,13 @@ module.exports = React.createClass
     input.addEventListener 'compositionstart', (ev) =>
       console.log '--- composition:start'
       onComposition = true
-      # TODO: allocate buffer
+      cursor = @refs.buffer.refs.cursor.getDOMNode()
+      cursor.style.color = 'white'
 
     input.addEventListener 'compositionupdate', (ev) =>
       console.log 'composition:update', ev.data
-      # TODO: resize input buffer
+      cursor = @refs.buffer.refs.cursor.getDOMNode()
+      cursor.innerHTML = ev.data
 
     input.addEventListener 'keydown', (ev) =>
       # ignore meta ime event
@@ -128,14 +148,19 @@ module.exports = React.createClass
         style:
           position: 'absolute'
           top: 0
-          left: 300
+          left: 0
           padding: 0
-          backgroundColor: 'wheat'
+          margin: 0
           width: '400px'
+          # width: 1
           height: '1em'
           outline: 'none'
       }
       $ 'div', {key: 'displayContainer', ref:'display'}, [
-        $ Buffer, @state
+        $ Buffer, {
+          doc: @state.doc
+          body: @state.body
+          ref: 'buffer'
+        }
       ]
     ]

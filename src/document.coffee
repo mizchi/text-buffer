@@ -68,9 +68,6 @@ module.exports = class Document
           @movePreviousLine()
         when 'down'
           @moveNextLine()
-    # else if input.char.length > 1
-    #   @text += input.char
-    #   @cursor.ch += input.char
     else
       # if /[a-zA-Z ]/.test input.char
       @insertText(input.char, @cursor)
