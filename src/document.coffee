@@ -48,7 +48,9 @@ module.exports = class Document
         @cursor.ch--
       else
         @cursor.line--
-
+    else if input.char is 'meta'
+      # ignore
+      ''
     else if input.char is 'enter'
       @text += '\n'
       @cursor.ch = 0
@@ -66,7 +68,10 @@ module.exports = class Document
           @movePreviousLine()
         when 'down'
           @moveNextLine()
+    # else if input.char.length > 1
+    #   @text += input.char
+    #   @cursor.ch += input.char
     else
-      if /[a-zA-Z ]/.test input.char
-        @insertText(input.char, @cursor)
-        @cursor.ch++
+      # if /[a-zA-Z ]/.test input.char
+      @insertText(input.char, @cursor)
+      @cursor.ch += input.char.length

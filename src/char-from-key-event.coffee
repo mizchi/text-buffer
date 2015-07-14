@@ -81,4 +81,5 @@ module.exports = getInputFromKeyEventEvent = do ->
     char = String.fromCharCode(e.which)
     unless e.shiftKey
       char = char.toLowerCase()
+    # debugger
     char

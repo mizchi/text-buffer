@@ -1,21 +1,65 @@
 charFromKeyEvent = require './char-from-key-event'
 Document = require './document'
+raf = window?.requestAnimationFrame ? setInterval
 
 module.exports = React.createClass
   componentDidMount: ->
-    input = @refs.input.getDOMNode()
-    input.addEventListener 'keydown', (ev) =>
-      ev.preventDefault()
-      char = charFromKeyEvent(ev)
-      input.value = char
+    onComposition = false
 
-      @state.doc.handleInput
-        char : char
-        shift: ev.shiftKey
-        alt  : ev.altKey
-        meta : ev.metaKey
-        ctrl : ev.ctrlKey
-      @setState body: @state.doc.text
+    input = @refs.input.getDOMNode()
+
+    events = []
+    do mainloop = =>
+      if events.length > 0
+        while f = events.shift() then f()
+      raf mainloop
+
+    input.addEventListener 'compositionend', (ev) =>
+      console.log '--- composition:end'
+      char = ev.data
+      onComposition = false
+
+      # exec priority
+      events.unshift =>
+        @state.doc.handleInput
+          char : char
+          shift: false
+          alt  : false
+          meta : false
+          ctrl : false
+        @setState body: @state.doc.text
+        input.innerHTML = ''
+      return
+
+    input.addEventListener 'compositionstart', (ev) =>
+      console.log '--- composition:start'
+      onComposition = true
+      # TODO: allocate buffer
+
+    input.addEventListener 'compositionupdate', (ev) =>
+      console.log 'composition:update', ev.data
+      # TODO: resize input buffer
+
+    input.addEventListener 'keydown', (ev) =>
+      # ignore meta ime event
+      if ev.which in [93, 229]
+        return
+
+      char = charFromKeyEvent(ev)
+      {shiftKey, altKey, metaKey, ctrlKey} = ev
+      events.push =>
+        if onComposition
+          console.log 'queued onComposition', onComposition
+        else
+          console.log 'insert directly'
+          @state.doc.handleInput
+            char : char
+            shift: shiftKey
+            alt  : altKey
+            meta : metaKey
+            ctrl : ctrlKey
+          @setState body: @state.doc.text
+          input.innerHTML = ''
 
   focus: -> @refs.input.getDOMNode().focus()
 
@@ -35,13 +79,16 @@ module.exports = React.createClass
         height: 800
         outline: '1px solid gray'
     }, [
-      $ 'textarea', {
+      $ 'div', {
         ref: 'input'
-        contenteditable: true
+        contentEditable: true
         style:
-          # position: 'absolute'
+          position: 'absolute'
+          top: 0
+          left: 300
           padding: 0
-          # width: '1000px'
+          backgroundColor: 'wheat'
+          width: '1000px'
           height: '1em'
           outline: 'none'
       }
