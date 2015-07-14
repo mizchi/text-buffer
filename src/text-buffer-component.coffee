@@ -4,29 +4,47 @@ charFromKeyEvent = require './char-from-key-event'
 Document = require './document'
 raf = window?.requestAnimationFrame ? setInterval
 
+flatten = require 'lodash.flatten'
+
 Buffer = React.createClass
   render: ->
     $ 'div', {className: 'linesContainer', key: 'lines'},
-      for line, lineCount in @props.body.split('\n')
+      @props.body.split('\n').map (line, lineCount) =>
         $ 'div', {key: 'l:'+lineCount, className: 'line'},
-          if line.length > 0
-            for char, charCount in line.split('')
-              cursor = @props.doc.cursor
-              if cursor.ch-1 is charCount and cursor.line is lineCount
-                # This is cursor positon
-                $ 'span', {
-                  ref: 'cursor'
-                  key: lineCount+':'+charCount
-                  className: 'cursor'
-                  style: {color: 'blue'}
-                }, '|'
-              else
-                $ 'span', {
-                  key: lineCount+':'+charCount
-                  className: 'char'
-                }, char
+          if line.length is 0
+            [
+              $ 'span', {
+                ref: 'cursor'
+                # key: 'cursor'
+                className: 'cursor'
+                style: {color: 'blue'}
+              }, '|'
+            ]
           else
-            [$ 'br']
+            chars =
+              for char, charCount in line.split('')
+                cursor = @props.doc.cursor
+                isCursorChar = cursor.ch-1 is charCount and cursor.line is lineCount
+                if isCursorChar
+                  [
+                    $ 'span', {
+                      key: lineCount+':'+charCount
+                      className: 'char'
+                    }, char
+                    $ 'span', {
+                      key: lineCount+':'+charCount+'cursor'
+                      className: 'char'
+                      ref: 'cursor'
+                    }, '|'
+                  ]
+                else
+                  [
+                    $ 'span', {
+                      key: lineCount+':'+charCount
+                      className: 'char'
+                    }, char
+                  ]
+            flatten(chars)
 
 module.exports = React.createClass
   componentDidMount: ->
@@ -68,7 +86,8 @@ module.exports = React.createClass
 
     input.addEventListener 'keydown', (ev) =>
       # ignore meta ime event
-      if ev.which in [93, 229]
+      console.log ev.which
+      if ev.which in [16, 17, 18, 93, 229]
         return
 
       char = charFromKeyEvent(ev)
